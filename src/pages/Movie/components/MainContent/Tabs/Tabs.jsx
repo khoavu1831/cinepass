@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react"
 import Tab from "./Tab"
-import ItemVersion from "./ItemVersion";
-import Cast from "./Cast";
-import Card from "../../../../../components/Cards/Card";
-import { getTopMovies } from "../../../../../services/movieService";
-import { mapSliderMovie } from "../../../../../mappers/sliderMovieMapper";
-import { Link } from "react-router-dom";
-import ItemComment from "./ItemComment";
+import ItemVersion from "./ItemVersion"
+import Cast from "./Cast"
+import Card from "../../../../../components/Cards/Card"
+import { fetchTopTodayMovies } from "../../../../../services/movieService"
+import { mapSliderMovie } from "../../../../../mappers/sliderMovieMapper"
+import { Link } from "react-router-dom"
+import ItemComment from "./ItemComment"
+import { TMDB_IMAGE_URL } from "../../../../../api/tmdb"
 
-function Tabs({ isWatch }) {
+function Tabs({ movie, isWatch }) {
   const [active, setActive] = useState("episodes");
-  const [topMovies, setTopMovies] = useState([]);
+  const [suggestMovies, setSuggestMovies] = useState([]);
   const [isPlayVideo, setIsPlayVideo] = useState(false);
+  const [activeVideo, setActiveVideo] = useState(null);
   const [isActiveCommentBtn, setIsActiveCommentBtn] = useState(true);
   const [toggle, setToggle] = useState(false);
   const [text, setText] = useState("");
@@ -26,12 +28,16 @@ function Tabs({ isWatch }) {
   };
 
   useEffect(() => {
-    getTopMovies().then(data => {
-      const mapped = data.map(mapSliderMovie);
-      setTopMovies(mapped);
+    fetchTopTodayMovies().then(data => {
+      const mapped = (data.results ?? []).map(mapSliderMovie);
+      setSuggestMovies(mapped);
     });
   }, []);
 
+  const cast = movie?.credits?.cast ?? [];
+  const trailers = (movie?.videos?.results ?? []).filter(v => v.site === "YouTube" && (v.type === "Trailer" || v.type === "Teaser")).slice(0, 8);
+  const backdrops = (movie?.images?.backdrops ?? []).slice(0, 12);
+  const posters = (movie?.images?.posters ?? []).slice(0, 6);
 
   return (
     <>
@@ -44,60 +50,60 @@ function Tabs({ isWatch }) {
         </div>
       </div>
 
-      {/* --- Content Tab --- */}
-      {/* Espisodes */}
       {active === "episodes" && (
         <div className="versions mb-15">
-          {/* Heading */}
           <div className="heading py-6">
             <h1 className="text-white text-xl font-bold">Các bản chiếu</h1>
           </div>
 
-          {/* Content*/}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <ItemVersion subTitle={"Phụ đề"} icon={"fa-closed-captioning"} hexColor={"#726d6d"} />
-            <ItemVersion subTitle={"Thuyết minh giọng Nam"} icon={"fa-microphone"} hexColor={"#297447"} />
+            <ItemVersion movie={movie} subTitle={"Phụ đề"} icon={"fa-closed-captioning"} hexColor={"#726d6d"} />
+            <ItemVersion movie={movie} subTitle={"Thuyết minh giọng Nam"} icon={"fa-microphone"} hexColor={"#297447"} />
           </div>
         </div>
       )}
 
-      {/* Gallery */}
       {active === "gallery" && (
         <div className="versions mb-15">
 
-          {/* Videos */}
           <div className="videos">
-
-            {/* Heading */}
             <div className="heading py-6">
               <h1 className="text-white text-[18px] font-medium">Videos</h1>
             </div>
 
-            {/* Content*/}
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {trailers.length > 0 ? (
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {trailers.map(video => (
+                  <div key={video.id} className="wrapper-video">
+                    <div
+                      className="video flex justify-center items-center w-full aspect-video border border-gray-400 cursor-pointer relative overflow-hidden rounded-lg"
+                      onClick={() => { setActiveVideo(video.key); setIsPlayVideo(true); }}
+                    >
+                      <img
+                        src={`https://img.youtube.com/vi/${video.key}/mqdefault.jpg`}
+                        className="absolute inset-0 w-full h-full object-cover opacity-60"
+                        alt={video.name}
+                      />
+                      <button className="relative w-10 h-10 rounded-full border-gray-400 border bg-black/50">
+                        <i className="fa-solid fa-play text-white"></i>
+                      </button>
+                    </div>
 
-              {/* Video item */}
-              <div className="wrapper-video">
-                <div className="video flex justify-center items-center w-full aspect-video border border-gray-400">
-                  <button onClick={() => setIsPlayVideo(true)} className="w-10 h-10 rounded-full border-gray-400 border">
-                    <i className="fa-solid fa-play text-white"></i>
-                  </button>
-                </div>
-
-                {/* Context video */}
-                <div className="context-video py-2 text-white text-[16px]">
-                  <span>Trailer</span>
-                </div>
+                    <div className="context-video py-2 text-white text-[13px] line-clamp-1">
+                      <span>{video.name}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            ) : (
+              <p className="text-gray-500 text-[14px]">Chưa có video nào.</p>
+            )}
 
-            {/* Modal Video */}
-            {isPlayVideo && (
+            {isPlayVideo && activeVideo && (
               <div className="fixed inset-0 z-100 flex items-center justify-center bg-[#1b1d29]/80 px-4">
-                {/* Frame video */}
                 <div className="relative flex justify-center items-center w-full md:max-w-180 bg-mainblue p-2 rounded-2xl aspect-video">
                   <button
-                    onClick={() => setIsPlayVideo(false)}
+                    onClick={() => { setIsPlayVideo(false); setActiveVideo(null); }}
                     className="cursor-pointer absolute -top-4 -right-4 flex justify-center items-center text-black text-[16px] h-9 w-9 rounded-full bg-white z-10"
                   >
                     <i className="fa-solid fa-xmark"></i>
@@ -105,8 +111,8 @@ function Tabs({ isWatch }) {
                   <div className="relative w-full aspect-video rounded-2xl overflow-hidden">
                     <iframe
                       className="w-full h-full"
-                      src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-                      title="NGGYU"
+                      src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1`}
+                      title="Movie Trailer"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     ></iframe>
@@ -116,95 +122,81 @@ function Tabs({ isWatch }) {
             )}
           </div>
 
-          {/* Images */}
-          <div className="images xl:max-w-280">
+          <div className="images xl:max-w-280 mt-6">
             <div className="heading py-1">
               <h1 className="text-white text-[18px] font-medium">Hình ảnh</h1>
             </div>
 
-            {/* Content*/}
-            <div className="columns-2 md:columns-3 gap-2 w-full space-y-2">
-
-              <div className="break-inside-avoid">
-                <img className="w-full h-full rounded-sm" src="https://static.nutscdn.com/vimg/0-0/2be582621899d8efa7554449c94153a1.webp" alt="" />
+            {backdrops.length > 0 ? (
+              <div className="columns-2 md:columns-3 gap-2 w-full space-y-2">
+                {backdrops.map(img => (
+                  <div key={img.file_path} className="break-inside-avoid">
+                    <img
+                      className="w-full h-full rounded-sm"
+                      src={`${TMDB_IMAGE_URL}/w780${img.file_path}`}
+                      alt=""
+                    />
+                  </div>
+                ))}
+                {posters.map(img => (
+                  <div key={img.file_path} className="break-inside-avoid">
+                    <img
+                      className="w-full h-full rounded-sm"
+                      src={`${TMDB_IMAGE_URL}/w342${img.file_path}`}
+                      alt=""
+                    />
+                  </div>
+                ))}
               </div>
-
-              <div className="break-inside-avoid">
-                <img className="w-full h-full rounded-sm" src="https://static.nutscdn.com/vimg/0-0/d10e69cc4b68fd2974c9d0314c4b9720.jpg" alt="" />
-              </div>
-
-              <div className="break-inside-avoid">
-                <img className="w-full h-full rounded-sm" src="https://static.nutscdn.com/vimg/0-0/49d991d7b3eb5d6c5f8b0c26f01b6b9a.webp" alt="" />
-              </div>
-
-              <div className="break-inside-avoid">
-                <img className="w-full h-full rounded-sm" src="https://static.nutscdn.com/vimg/0-0/1d83e95bbd7b059d7e0886701bc81043.webp" alt="" />
-              </div>
-
-              <div className="break-inside-avoid">
-                <img className="w-full h-full rounded-sm" src="https://static.nutscdn.com/vimg/0-0/76b0d75dd150e3d1a6aee4b617853ffe.jpg" alt="" />
-              </div>
-
-              <div className="break-inside-avoid">
-                <img className="w-full h-full rounded-sm" src="https://static.nutscdn.com/vimg/0-0/35b7075a2cdba3c7398f6f1975ab66bb.jpg" alt="" />
-              </div>
-
-            </div>
+            ) : (
+              <p className="text-gray-500 text-[14px]">Chưa có hình ảnh.</p>
+            )}
           </div>
         </div>
       )}
 
-
-      {/* Cast */}
       {active === "cast" && (
         <div className="versions mb-15">
-          {/* Heading */}
           <div className="heading py-6">
             <h1 className="text-white text-xl font-bold">Diễn viên</h1>
           </div>
 
-          {/* Content*/}
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-4 lg:grid-cols-5">
-            <Cast avatar={"https://image.tmdb.org/t/p/w500/be1bVF7qGX91a6c5WeRPs5pKXln.jpg"} name={"Iris Elba"} />
-            <Cast avatar={"https://image.tmdb.org/t/p/w500/8e6mt0vGjPo6eW52gqRuXy5YnfN.jpg"} name={"Iris Elba"} />
-            <Cast avatar={"https://image.tmdb.org/t/p/w500/be1bVF7qGX91a6c5WeRPs5pKXln.jpg"} name={"Iris Elba"} />
-            <Cast avatar={"https://image.tmdb.org/t/p/w500/be1bVF7qGX91a6c5WeRPs5pKXln.jpg"} name={"Iris Elba"} />
-            <Cast avatar={"https://image.tmdb.org/t/p/w500/be1bVF7qGX91a6c5WeRPs5pKXln.jpg"} name={"Iris Elba"} />
-          </div>
+          {cast.length > 0 ? (
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-4 lg:grid-cols-5">
+              {cast.slice(0, 15).map(person => (
+                <Cast key={person.id} person={person} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-[14px]">Chưa có thông tin diễn viên.</p>
+          )}
         </div>
       )}
 
-      {/* Suggest */}
       {active === "suggest" && (
         <div className="versions mb-15 xl:max-w-280">
-          {/* Heading */}
           <div className="heading py-6">
             <h1 className="text-white text-xl font-bold">Có thể bạn sẽ thích</h1>
           </div>
 
-          {/* Content*/}
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-4 lg:grid-cols-5">
-            {topMovies.slice(0, 12).map((m) => (
+            {suggestMovies.slice(0, 12).map((m) => (
               <Card key={m.id} movie={m} variant={"vertical"} />
             ))}
           </div>
         </div>
       )}
 
-      {/* Comment Section */}
       <div className="comment-section grid grid-cols-1 text-white">
 
-        {/* Heading */}
         <div className="heading flex justify-between items-center">
 
-          {/* Count comment */}
           <div className="flex justify-center items-center">
             <i className="fa-solid fa-comment-dots "></i>
             <h1 className="pl-2 pr-0.75">Bình luận</h1>
-            <span>(843)</span>
+            <span>(0)</span>
           </div>
 
-          {/* Comment + Rate */}
           <div className="flex border border-gray-400 rounded-[10px]">
             <div className="text-[12px] py-1 px-0.75">
               <button
@@ -222,7 +214,6 @@ function Tabs({ isWatch }) {
           </div>
         </div>
 
-        {/* Warning */}
         <div className="warning my-4">
           <span className="text-gray-400 text-[13px]">
             Vui lòng
@@ -231,12 +222,10 @@ function Tabs({ isWatch }) {
           </span>
         </div>
 
-        {/* Comment area */}
         <div
           id="comment"
           className="flex flex-col bg-[#ffffff10] rounded-2xl p-[8px_8px_0_8px] w-full"
         >
-          {/* Top */}
           <div className="relative rounded-2xl bg-[#1b1d29] border-transparent border focus-within:border focus-within:border-mainblue overflow-hidden">
             <div className="absolute top-0 right-1 text-[12px] text-gray-400 p-1 overflow-hidden">
               {text.length}/{MAX_TEXT_LENGTH}
@@ -249,10 +238,8 @@ function Tabs({ isWatch }) {
             />
           </div>
 
-          {/* Bottom */}
           <div className="flex justify-between py-4">
 
-            {/* Toggle spoil */}
             <div className="flex justify-center items-center gap-1.5 text-[12px]">
               <button
                 onClick={() => setToggle(!toggle)}
@@ -260,7 +247,6 @@ function Tabs({ isWatch }) {
                 ${!toggle ? "border-gray-400/40" : "border border-mainblue"}
                 `}
               >
-                {/* Point toggle */}
                 <div
                   className={`rounded-full w-2.5 h-2.5 transition-all duration-700 ease-in-out transform 
                   ${!toggle ? "translate-x-0 bg-gray-400" : "translate-x-3 bg-mainblue"}`}>
@@ -269,7 +255,6 @@ function Tabs({ isWatch }) {
               <span>Tiết lộ?</span>
             </div>
 
-            {/* Send button */}
             <div className="flex gap-2 items-center text-mainblue text-[16px] pr-2">
               <span>Gửi</span>
               <i className="fa-solid fa-paper-plane"></i>
@@ -279,10 +264,7 @@ function Tabs({ isWatch }) {
         </div>
       </div>
 
-      {/* Comment's Users */}
       <div className="flex flex-col mt-12 pb-20 gap-6">
-        <ItemComment />
-        <ItemComment />
         <ItemComment />
         <ItemComment />
         <ItemComment />

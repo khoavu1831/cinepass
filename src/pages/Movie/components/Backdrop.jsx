@@ -1,21 +1,18 @@
-function Backdrop() {
+import { TMDB_IMAGE_URL } from "../../../api/tmdb";
+
+function Backdrop({ movie }) {
+  const backdropUrl = movie?.backdrop_path
+    ? `${TMDB_IMAGE_URL}/original${movie.backdrop_path}`
+    : "https://static.nutscdn.com/vimg/1920-0/1d83e95bbd7b059d7e0886701bc81043.webp";
 
   return (
     <>
-      {/* Background top */}
       <div
-        className="
-          bg-[url('https://static.nutscdn.com/vimg/1920-0/1d83e95bbd7b059d7e0886701bc81043.webp')]
-          bg-cover opacity-80
-          h-50 sm:h-75 xl:h-144
-          w-full
-          relative z-0
-        "
+        className="bg-cover opacity-80 h-50 sm:h-75 xl:h-144 w-full relative z-0"
+        style={{ backgroundImage: `url('${backdropUrl}')` }}
       >
-        {/* Effect shadow for image */}
         <div className="absolute inset-0 pointer-events-none bg-linear-to-t from-[#1b1d29] max-lg:via-[#1b1d29]/80 lg:via-[#1b1d29]/30"></div>
 
-        {/* Grid noise */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.9]"
           style={{
@@ -27,7 +24,7 @@ function Backdrop() {
           }}
         ></div>
       </div>
-    </ >
+    </>
   )
 }
 

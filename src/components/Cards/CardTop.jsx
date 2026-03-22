@@ -24,7 +24,7 @@ function CardTop({ movie, index }) {
                   group-hover:bg-mainblue
                   `}
               >
-                <Link to={"/movie"}>
+                <Link to={`/movie/${movie.id}`}>
                   <img
                     src={movie.avatar}
                     className={`

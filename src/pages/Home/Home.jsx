@@ -3,33 +3,46 @@ import Footer from "../../components/Footer";
 import Header from "../../components/Header/Header";
 import MainContent from "./components/MainContent";
 import Slider from "./components/Slider/Slider";
-import { getAnimeSliderData, getTopMovies } from "../../services/movieService";
+import { getHomeData } from "../../services/movieService";
 import { mapSliderMovie } from "../../mappers/sliderMovieMapper";
 
 function Home() {
-  const [movies, setMovies] = useState([]);
-  const [animes, setAnimes] = useState([]);
+  const [homeData, setHomeData] = useState({
+    sliderMovies: [],
+    animeSlider: [],
+    koreanMovies: [],
+    usukMovies: [],
+    thaiMovies: [],
+    cinemaMovies: [],
+    topTodayMovies: [],
+    thrillerMovies: [],
+    animeCollection: [],
+  });
 
   useEffect(() => {
-    getTopMovies().then(data => {
-      const mapped = data.map(mapSliderMovie);
-      setMovies(mapped);
+    getHomeData().then((data) => {
+      setHomeData({
+        sliderMovies: data.sliderMovies.map(mapSliderMovie),
+        animeSlider: data.animeSlider.map(mapSliderMovie),
+        koreanMovies: data.koreanMovies.map(mapSliderMovie),
+        usukMovies: data.usukMovies.map(mapSliderMovie),
+        thaiMovies: data.thaiMovies.map(mapSliderMovie),
+        cinemaMovies: data.cinemaMovies.map(mapSliderMovie),
+        topTodayMovies: data.topTodayMovies.map(mapSliderMovie),
+        thrillerMovies: data.thrillerMovies.map(mapSliderMovie),
+        animeCollection: data.animeCollection.map(mapSliderMovie),
+      });
     });
-
-    getAnimeSliderData().then(data => {
-      const mapped = data.map(mapSliderMovie);
-      setAnimes(mapped);
-    })
-  }, [])
+  }, []);
 
   return (
     <div className="h-full bg-[#1b1d29] xl:px-6">
       <Header />
-      <Slider movies={movies} />
-      <MainContent animes={animes} movies={movies}/>
+      <Slider movies={homeData.sliderMovies} />
+      <MainContent data={homeData} />
       <Footer />
     </div>
-  )
+  );
 }
 
-export default Home
+export default Home;

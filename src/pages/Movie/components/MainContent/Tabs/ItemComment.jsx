@@ -1,3 +1,5 @@
+import avatarPng from "/messi.webp";
+
 function ItemComment() {
   return (
     <>
@@ -10,7 +12,7 @@ function ItemComment() {
           <div className="h-10 w-10 rounded-full">
             <img
               className="h-full w-full object-cover rounded-full"
-              src="https://www.rophim.li/images/avatars/pack1/08.jpg" alt="" />
+              src={avatarPng} alt="avatar logo" />
           </div>
         </div>
 

@@ -4,7 +4,7 @@ function ItemTypeRank({ states, index, isModal, movie }) {
   let icon = "";
   let color = "";
   let state = states[index];
-  
+
   if (state === "minus") {
     icon = "fa-minus"
     color = "text-gray-700"
@@ -40,7 +40,7 @@ function ItemTypeRank({ states, index, isModal, movie }) {
           <div className="line-clamp-1 max-sm:line-clamp-2 text-[14px]">
             <Link
               className="hover:text-mainblue"
-              to={"/movie"}          
+              to={`/movie/${movie.id}`}
             >
               {movie.title}
             </Link>

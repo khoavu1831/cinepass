@@ -1,3 +1,5 @@
+import avatarPng from "/messi.webp";
+
 function CardTopComment() {
   return (
     <>
@@ -21,7 +23,7 @@ function CardTopComment() {
                 <div className="cover-avatar h-12 w-12">
                   <img
                     className="w-full h-full object-cover rounded-full group-hover:border-2 border-white hover:opacity-80"
-                    src="https://www.rophim.li/images/avatars/pack1/08.jpg"
+                    src={avatarPng}
                   />
                 </div>
 

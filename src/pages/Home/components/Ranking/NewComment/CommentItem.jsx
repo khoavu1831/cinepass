@@ -1,3 +1,5 @@
+import avatarPng from "/messi.webp";
+
 function CommentItem() {
   return (
     <>
@@ -10,7 +12,7 @@ function CommentItem() {
           <div className="cover-image h-10 w-10 shrink-0">
             <img
               className="w-full h-full object-cover rounded-full hover:opacity-80"
-              src="https://www.rophim.li/images/avatars/pack1/03.jpg"
+              src={avatarPng}
             />
           </div>
 

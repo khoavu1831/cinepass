@@ -60,7 +60,7 @@ function TopSliderAnime({ movies, active, setActive }) {
               className={`absolute flex lg:flex-row-reverse inset-0 transition-opacity duration-700 ${i === active ? "opacity-100" : "opacity-0 z-0"}`}
             >
               <Link
-                to={"/movie"}
+                to={`/movie/${m.id}`}
                 className="h-full xl:w-300 w-full"
               >
                 <img
@@ -133,9 +133,9 @@ function TopSliderAnime({ movies, active, setActive }) {
                 {/* Touches */}
                 <div className="max-lg:hidden flex items-center pt-6 gap-6">
                   {/* Play */}
-                  <a href="" className="flex justify-center items-center rounded-full bg-mainblue h-15 w-15 lg:h-17.5 lg:w-17.5 lg:p-6 shadow-[0px_4px_10px_5px_rgba(0,149,182,0.4)]">
+                  <Link to={`/watch/${m.id}`} className="flex justify-center items-center rounded-full bg-mainblue h-15 w-15 lg:h-17.5 lg:w-17.5 lg:p-6 shadow-[0px_4px_10px_5px_rgba(0,149,182,0.4)]">
                     <i className="fa-solid fa-play text-black text-[18px] lg:text-[26px]"></i>
-                  </a>
+                  </Link>
 
                   {/* Like + Info */}
                   <div className="flex items-center text-white bg-transparent text-[18px] rounded-l-full rounded-r-full h-12 border">

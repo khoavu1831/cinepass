@@ -14,7 +14,7 @@ function Card({ movie, variant, type }) {
           {/* Image */}
           <div className="group relative">
             <Link
-              to={"/movie"}
+              to={`/movie/${movie.id}`}
               className={`relative block transistion duration-700 lg:group-hover:blur-[2px] ${isVertical ? "aspect-2/3" : "aspect-2/1"} `}>
               <img
                 src={`${isVertical ? movie.avatar : movie.poster}`}
