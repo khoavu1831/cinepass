@@ -1,14 +1,13 @@
 import { fetchApi } from "../api/http";
 import { TMDB_BASE_URL } from "../api/tmdb";
 
-const discover = (params) =>
-  fetchApi(`${TMDB_BASE_URL}/discover/movie?language=vi-VN&${params}`);
+const discover = (params) => fetchApi(`${TMDB_BASE_URL}/discover/movie?language=vi-VN&${params}`);
 
-const trending = (params = "") =>
-  fetchApi(`${TMDB_BASE_URL}/trending/movie/week?language=vi-VN&${params}`);
+const trending = (params = "") => fetchApi(`${TMDB_BASE_URL}/trending/movie/week?language=vi-VN&${params}`);
 
 export const fetchSliderMovies = () => trending();
 export const fetchTopTodayMovies = () => trending("page=1");
+export const fetchTopSeriesMovies = () => fetchApi(`${TMDB_BASE_URL}/tv/top_rated?language=vi-VN&page=1`);
 
 export const fetchAnimeSlider = () =>
   discover("with_original_language=ja&sort_by=popularity.desc&page=1");
@@ -31,8 +30,6 @@ export const fetchThrillerMovies = () =>
 export const fetchAnimeCollection = () =>
   discover("with_original_language=ja&sort_by=vote_average.desc&page=1&vote_count.gte=200");
 
-export const fetchTopSeriesMovies = () =>
-  fetchApi(`${TMDB_BASE_URL}/tv/top_rated?language=vi-VN&page=1`);
 
 export const getHomeData = async () => {
   const [
