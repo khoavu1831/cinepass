@@ -9,7 +9,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
 
 // Database
 var conn = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -49,9 +48,6 @@ builder.Services.AddScoped<TmdbService>();
 builder.Services.AddHttpClient<TmdbService>();
 
 var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-    app.MapOpenApi();
 
 app.UseHttpsRedirection();
 app.UseCors("Frontend");

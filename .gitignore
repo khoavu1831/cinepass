@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Backend
+[Bb]in/
+[Oo]bj/
+appsettings.*.json
+*.user
+*.userosscache
+*.sln.docstates
