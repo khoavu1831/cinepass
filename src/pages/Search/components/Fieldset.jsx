@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import FilterRow from './FieldRow';
 
 const FILTER_DATA = {
   countries: ['Tất cả', 'Trung Quốc', 'Âu Mỹ', 'Hàn Quốc', 'Việt Nam', 'Nhật Bản', 'Thái Lan', 'Trung Quốc', 'Âu Mỹ', 'Hàn Quốc', 'Việt Nam', 'Nhật Bản', 'Thái Lan', 'Trung Quốc', 'Âu Mỹ', 'Hàn Quốc', 'Việt Nam', 'Nhật Bản', 'Thái Lan'],
@@ -12,74 +13,78 @@ const FILTER_DATA = {
 function Fieldset() {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState({
-    country: 'Tất cả',
-    type: 'Tất cả',
-    rating: 'Tất cả',
-    genre: 'Tất cả',
-    year: 'Tất cả',
+    country: ['Tất cả'],
+    type: ['Tất cả'],
+    rating: ['Tất cả'],
+    genre: ['Tất cả'],
+    year: ['Tất cả'],
     sort: 'Mới nhất'
   });
 
   const handleSelect = (category, value) => {
-    setFilters(prev => ({ ...prev, [category]: value }));
+    setFilters(prev => {
+      const currentSelection = prev[category];
+
+      if (category === 'sort') return { ...prev, [category]: value };
+
+      if (value === 'Tất cả') return { ...prev, [category]: ['Tất cả'] };
+
+      // Xử lý chọn nhiều
+      let newSelection = Array.isArray(currentSelection) 
+        ? currentSelection.filter(item => item !== 'Tất cả')
+        : [];
+
+      if (newSelection.includes(value)) {
+        newSelection = newSelection.filter(item => item !== value);
+        if (newSelection.length === 0) newSelection = ['Tất cả'];
+      } else {
+        newSelection.push(value);
+      }
+
+      return { ...prev, [category]: newSelection };
+    });
   };
 
-  const FilterRow = ({ label, items, activeValue, category }) => (
-    <div className="flex flex-wrap justify-between py-2 px-4">
-      <div className="label flex ">
-        <span className="text-white font-bold py-1 pr-3">{label}:</span>
-      </div>
-      <div className="flex flex-wrap justify-start gap-2 flex-1">
-        {items.map((item) => (
-          <button
-            key={item}
-            onClick={() => handleSelect(category, item)}
-            className={`cursor-pointer px-3 py-1 rounded-md text-[18px] font-mono ${activeValue === item
-                ? 'bg-mainblue text-white'
-                : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="">
-      <div
-        className="flex items-center text-white font-medium text-xl gap-2 mb-6 cursor-pointer select-none"
+    <fieldset className={isOpen ? "border border-gray-700 rounded-xl" : ""}>
+      <legend
+        className="flex items-center text-white font-medium text-md gap-2 mb-6 cursor-pointer select-none px-2"
         onClick={() => setIsOpen(!isOpen)}
       >
         <i className={`fa-solid fa-filter ${isOpen ? 'text-mainblue' : ''}`}></i>
-        <h1>Bộ lọc</h1>
-      </div>
+        <h1 className=''>Bộ lọc</h1>
+      </legend>
 
       {isOpen && (
-        <div className="">
-          <FilterRow label="Quốc gia" items={FILTER_DATA.countries} activeValue={filters.country} category="country" />
-          <FilterRow label="Loại phim" items={FILTER_DATA.types} activeValue={filters.type} category="type" />
-          <FilterRow label="Xếp hạng" items={FILTER_DATA.ratings} activeValue={filters.rating} category="rating" />
-          <FilterRow label="Thể loại" items={FILTER_DATA.genres} activeValue={filters.genre} category="genre" />
-          <FilterRow label="Năm sản xuất" items={FILTER_DATA.years} activeValue={filters.year} category="year" />
-          <FilterRow label="Sắp xếp" items={FILTER_DATA.sort} activeValue={filters.sort} category="sort" />
+        <div className="space-y-1">
+          <FilterRow label="Quốc gia" items={FILTER_DATA.countries} activeValue={filters.country} handleSelect={handleSelect} category="country" />
+          <hr className="border-gray-800 border-dashed" />
+          <FilterRow label="Loại phim" items={FILTER_DATA.types} activeValue={filters.type} handleSelect={handleSelect} category="type" />
+          <hr className="border-gray-800 border-dashed" />
+          <FilterRow label="Xếp hạng" items={FILTER_DATA.ratings} activeValue={filters.rating} handleSelect={handleSelect} category="rating" />
+          <hr className="border-gray-800 border-dashed" />
+          <FilterRow label="Thể loại" items={FILTER_DATA.genres} activeValue={filters.genre} handleSelect={handleSelect} category="genre" />
+          <hr className="border-gray-800 border-dashed" />
+          <FilterRow label="Năm sản xuất" items={FILTER_DATA.years} activeValue={filters.year} handleSelect={handleSelect} category="year" />
+          <hr className="border-gray-800 border-dashed" />
+          <FilterRow label="Sắp xếp" items={FILTER_DATA.sort} activeValue={filters.sort} handleSelect={handleSelect} category="sort" />
+          <hr className="border-gray-800 border-dashed" />
 
-          <div className="flex">
-            <button className="bg-mainblue cursor-pointer hover:opacity-90 text-white font-medium py-2 px-6 rounded-full flex items-center gap-2 transition-colors">
+          <div className="flex justify-end p-4 gap-2">
+            <button className="bg-mainblue cursor-pointer hover:opacity-90 text-[14px] text-white py-2 px-6 rounded-full flex items-center gap-2 transition-colors">
               Lọc kết quả <i className="fa-solid fa-arrow-right"></i>
             </button>
 
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="border border-gray-600 text-white py-2 px-8 rounded-full hover:bg-gray-800 transition-colors"
+              className="cursor-pointer border border-gray-600 text-white py-2 px-8 text-[14px] rounded-full hover:bg-gray-800 transition-colors"
             >
               Đóng
             </button>
           </div>
         </div>
       )}
-    </div>
+    </fieldset>
   );
 }
 
