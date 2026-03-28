@@ -6,7 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace CinePass_be.Repositories;
 
 /// <summary>
-/// Movie Repository implementation with specific queries
+/// Movie Repository implementation - MVP version
+/// Simplified queries for social media review platform
+/// Genres stored as JSON in Movie.GenresJson
 /// </summary>
 public class MovieRepository : Repository<Movie>, IMovieRepository
 {
@@ -14,28 +16,24 @@ public class MovieRepository : Repository<Movie>, IMovieRepository
     {
     }
 
+    /// <summary>
+    /// Get paginated list of all movies with optional search
+    /// </summary>
     public async Task<PagedResult<MovieListItemDto>> GetMoviesPagedAsync(
-        string? status, 
-        int? genreId, 
-        string? search, 
-        int page = 1, 
+        string? search = null,
+        int page = 1,
         int pageSize = 20)
     {
-        var query = _dbSet
-            .Include(m => m.MovieGenres)
-                .ThenInclude(mg => mg.Genre)
-            .AsQueryable();
+        var query = _dbSet.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(status) &&
-            Enum.TryParse<MovieStatus>(status, true, out var statusEnum))
-            query = query.Where(m => m.Status == statusEnum);
-
-        if (genreId.HasValue)
-            query = query.Where(m => m.MovieGenres.Any(mg => mg.GenreId == genreId));
-
+        // Filter by search query (title or local title)
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(m => m.Title.Contains(search) || 
-                                      (m.OriginalTitle != null && m.OriginalTitle.Contains(search)));
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(m => 
+                m.Title.ToLower().Contains(searchLower) || 
+                (m.LocalTitle != null && m.LocalTitle.ToLower().Contains(searchLower)));
+        }
 
         var total = await query.CountAsync();
 
@@ -43,7 +41,18 @@ public class MovieRepository : Repository<Movie>, IMovieRepository
             .OrderByDescending(m => m.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(m => ToListItem(m))
+            .Select(m => new MovieListItemDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                LocalTitle = m.LocalTitle,
+                PosterUrl = m.PosterUrl,
+                ReleaseDate = m.ReleaseDate,
+                RatingAvg = m.RatingAvg,
+                Duration = m.Duration ?? 0,
+                ReviewCount = m.ReviewCount,
+                GenresJson = m.GenresJson
+            })
             .ToListAsync();
 
         return new PagedResult<MovieListItemDto>
@@ -55,75 +64,54 @@ public class MovieRepository : Repository<Movie>, IMovieRepository
         };
     }
 
+    /// <summary>
+    /// Get complete movie details by ID
+    /// </summary>
     public async Task<MovieDetailDto?> GetMovieDetailAsync(Guid id)
     {
         return await _dbSet
             .Where(m => m.Id == id)
-            .Include(m => m.MovieGenres)
-                .ThenInclude(mg => mg.Genre)
-            .Select(m => ToDetailDto(m))
+            .Select(m => new MovieDetailDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                LocalTitle = m.LocalTitle,
+                PosterUrl = m.PosterUrl,
+                ReleaseDate = m.ReleaseDate,
+                RatingAvg = m.RatingAvg,
+                Duration = m.Duration ?? 0,
+                ReviewCount = m.ReviewCount,
+                GenresJson = m.GenresJson,
+                Description = m.Description,
+                TrailerUrl = m.TrailerUrl,
+                Language = m.Language,
+                Director = m.Director,
+                Cast = m.Cast
+            })
             .FirstOrDefaultAsync();
     }
 
-    public async Task<Movie?> GetMovieWithGenresAsync(Guid id)
+    /// <summary>
+    /// Get trending movies ordered by rating and review count
+    /// </summary>
+    public async Task<List<MovieListItemDto>> GetTrendingMoviesAsync(int count = 10)
     {
         return await _dbSet
-            .Where(m => m.Id == id)
-            .Include(m => m.MovieGenres)
-                .ThenInclude(mg => mg.Genre)
-            .FirstOrDefaultAsync();
-    }
-
-    public async Task<IEnumerable<Movie>> GetMoviesByGenreAsync(int genreId)
-    {
-        return await _dbSet
-            .Where(m => m.MovieGenres.Any(mg => mg.GenreId == genreId))
-            .Include(m => m.MovieGenres)
-                .ThenInclude(mg => mg.Genre)
+            .OrderByDescending(m => m.RatingAvg)
+            .ThenByDescending(m => m.ReviewCount)
+            .Take(count)
+            .Select(m => new MovieListItemDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                LocalTitle = m.LocalTitle,
+                PosterUrl = m.PosterUrl,
+                ReleaseDate = m.ReleaseDate,
+                RatingAvg = m.RatingAvg,
+                Duration = m.Duration ?? 0,
+                ReviewCount = m.ReviewCount,
+                GenresJson = m.GenresJson
+            })
             .ToListAsync();
-    }
-
-    private static MovieListItemDto ToListItem(Movie m)
-    {
-        return new MovieListItemDto
-        {
-            Id = m.Id,
-            Title = m.Title,
-            OriginalTitle = m.OriginalTitle,
-            Poster = m.Poster,
-            ReleaseDate = m.ReleaseDate,
-            Status = m.Status.ToString(),
-            RatingAvg = m.RatingAvg,
-            Genres = m.MovieGenres?.Select(mg => new GenreDto 
-            { 
-                Id = mg.Genre.Id, 
-                Name = mg.Genre.Name 
-            }).ToList() ?? []
-        };
-    }
-
-    private static MovieDetailDto ToDetailDto(Movie m)
-    {
-        return new MovieDetailDto
-        {
-            Id = m.Id,
-            Title = m.Title,
-            OriginalTitle = m.OriginalTitle,
-            Poster = m.Poster,
-            Backdrop = m.Backdrop,
-            ReleaseDate = m.ReleaseDate,
-            EndDate = m.EndDate,
-            Status = m.Status.ToString(),
-            RatingAvg = m.RatingAvg,
-            Director = m.Director,
-            Description = m.Description,
-            Duration = m.Duration,
-            TmdbId = m.TmdbId,
-            Genres = m.MovieGenres?.Select(mg => new GenreDto 
-            { 
-                Id = mg.Genre.Id, 
-                Name = mg.Genre.Name 
-            }).ToList() ?? []
-        };
     }
 }

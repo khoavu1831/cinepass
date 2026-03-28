@@ -3,155 +3,182 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CinePass_be.Data;
 
+/// <summary>
+/// AppDbContext - MVP Configuration
+/// Core models for social media movie review platform:
+/// User, Movie, Review, Comment, Like, Follow, ReviewEmbedding
+/// 
+/// Removed: Booking, BookingSeat, Cinema, Room, Seat, Showtime, Notification, Genre, MovieGenre
+/// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    // ===== Core MVP DbSets (7 tables) =====
     public DbSet<User> Users => Set<User>();
-    public DbSet<Follow> Follows => Set<Follow>();
     public DbSet<Movie> Movies => Set<Movie>();
-    public DbSet<Genre> Genres => Set<Genre>();
-    public DbSet<MovieGenre> MovieGenres => Set<MovieGenre>();
-    public DbSet<Cinema> Cinemas => Set<Cinema>();
-    public DbSet<Room> Rooms => Set<Room>();
-    public DbSet<Seat> Seats => Set<Seat>();
-    public DbSet<Showtime> Showtimes => Set<Showtime>();
-    public DbSet<Booking> Bookings => Set<Booking>();
-    public DbSet<BookingSeat> BookingSeats => Set<BookingSeat>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Like> Likes => Set<Like>();
-    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Follow> Follows => Set<Follow>();
+    public DbSet<ReviewEmbedding> ReviewEmbeddings => Set<ReviewEmbedding>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
-        // --- User ---
+        // ========== 1. USER ==========
         b.Entity<User>(e =>
         {
             e.HasKey(u => u.Id);
+            
+            // Unique constraints
             e.HasIndex(u => u.Email).IsUnique();
             e.HasIndex(u => u.Username).IsUnique();
+            
+            // Property configs
             e.Property(u => u.Role).HasConversion<string>();
-        });
-
-        // --- Follow ---
-        b.Entity<Follow>(e =>
-        {
-            e.HasKey(f => new { f.FollowerId, f.FollowingId });
-            e.HasOne(f => f.Follower)
-                .WithMany(u => u.Following)
-                .HasForeignKey(f => f.FollowerId)
-                .OnDelete(DeleteBehavior.Restrict);
-            e.HasOne(f => f.FollowingUser)
-                .WithMany(u => u.Followers)
+            
+            // Relationships
+            e.HasMany(u => u.Reviews)
+                .WithOne(r => r.User)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            e.HasMany(u => u.Comments)
+                .WithOne(c => c.User)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            e.HasMany(u => u.Likes)
+                .WithOne(l => l.User)
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            // Followers (self-referencing)
+            e.HasMany(u => u.FollowersCollection)
+                .WithOne(f => f.Following)
                 .HasForeignKey(f => f.FollowingId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // Following (self-referencing)
+            e.HasMany(u => u.FollowingCollection)
+                .WithOne(f => f.Follower)
+                .HasForeignKey(f => f.FollowerId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // --- Movie ---
+        // ========== 2. MOVIE ==========
         b.Entity<Movie>(e =>
         {
             e.HasKey(m => m.Id);
-            e.HasIndex(m => m.TmdbId).IsUnique();
-            e.Property(m => m.Status).HasConversion<string>();
-            e.Property(m => m.RatingAvg).HasPrecision(3, 1);
+            
+            // Unique & indexes
+            e.HasIndex(m => m.TmdbId).IsUnique().IsNullable();
+            e.HasIndex(m => m.ReviewCount).IsDescending();
+            e.HasIndex(m => m.RatingAvg).IsDescending();
+            
+            // Property configs
+            e.Property(m => m.RatingAvg)
+                .HasPrecision(4, 2)  // Allows: 0.00 - 99.99
+                .HasDefaultValue(0m);
+            
+            // Relationships
+            e.HasMany(m => m.Reviews)
+                .WithOne(r => r.Movie)
+                .HasForeignKey(r => r.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            e.HasMany(m => m.ReviewEmbeddings)
+                .WithOne(re => re.Movie)
+                .HasForeignKey(re => re.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // --- Genre ---
-        b.Entity<Genre>(e =>
-        {
-            e.HasKey(g => g.Id);
-            e.HasIndex(g => g.Slug).IsUnique();
-        });
-
-        // --- MovieGenre ---
-        b.Entity<MovieGenre>(e =>
-        {
-            e.HasKey(mg => new { mg.MovieId, mg.GenreId });
-            e.HasOne(mg => mg.Movie)
-                .WithMany(m => m.MovieGenres)
-                .HasForeignKey(mg => mg.MovieId);
-            e.HasOne(mg => mg.Genre)
-                .WithMany(g => g.MovieGenres)
-                .HasForeignKey(mg => mg.GenreId);
-        });
-
-        // --- Room ---
-        b.Entity<Room>(e =>
-        {
-            e.HasKey(r => r.Id);
-            e.Property(r => r.Type).HasConversion<string>();
-        });
-
-        // --- Seat ---
-        b.Entity<Seat>(e =>
-        {
-            e.HasKey(s => s.Id);
-            e.HasIndex(s => new { s.RoomId, s.Row, s.Number }).IsUnique();
-            e.Property(s => s.Type).HasConversion<string>();
-        });
-
-        // --- Showtime ---
-        b.Entity<Showtime>(e =>
-        {
-            e.HasKey(s => s.Id);
-            e.Property(s => s.Status).HasConversion<string>();
-            e.Property(s => s.BasePrice).HasPrecision(10, 2);
-        });
-
-        // --- Booking ---
-        b.Entity<Booking>(e =>
-        {
-            e.HasKey(b2 => b2.Id);
-            e.Property(b2 => b2.Status).HasConversion<string>();
-            e.Property(b2 => b2.TotalPrice).HasPrecision(10, 2);
-        });
-
-        // --- BookingSeat ---
-        b.Entity<BookingSeat>(e =>
-        {
-            e.HasKey(bs => bs.Id);
-            e.HasIndex(bs => new { bs.ShowtimeId, bs.SeatId }).IsUnique();
-            e.Property(bs => bs.PriceAtBooking).HasPrecision(10, 2);
-            e.HasOne(bs => bs.Booking)
-                .WithMany(bk => bk.BookingSeats)
-                .HasForeignKey(bs => bs.BookingId);
-            e.HasOne(bs => bs.Seat)
-                .WithMany(s => s.BookingSeats)
-                .HasForeignKey(bs => bs.SeatId);
-        });
-
-        // --- Review ---
+        // ========== 3. REVIEW ==========
         b.Entity<Review>(e =>
         {
             e.HasKey(r => r.Id);
-            e.HasIndex(r => new { r.UserId, r.MovieId }).IsUnique();
-            e.Property(r => r.Rating).HasPrecision(3, 1);
+            
+            // Unique & indexes
+            e.HasIndex(r => new { r.UserId, r.MovieId })
+                .IsUnique()  // One review per user per movie
+                .HasDatabaseName("IX_Review_UserMovie_Unique");
+            
+            e.HasIndex(r => r.CreatedAt).IsDescending();
+            e.HasIndex(r => r.Rating).IsDescending();
+            e.HasIndex(r => r.LikeCount).IsDescending();
+            
+            // Property configs
+            e.Property(r => r.Rating)
+                .HasPrecision(4, 1);  // Allows: 0.0 - 99.9 (for 1-10 scale)
+            
+            // Relationships
+            e.HasMany(r => r.Comments)
+                .WithOne(c => c.Review)
+                .HasForeignKey(c => c.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            e.HasMany(r => r.Likes)
+                .WithOne(l => l.Review)
+                .HasForeignKey(l => l.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            e.HasOne(r => r.ReviewEmbedding)
+                .WithOne(re => re.Review)
+                .HasForeignKey<ReviewEmbedding>(re => re.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // --- Comment ---
+        // ========== 4. COMMENT ==========
         b.Entity<Comment>(e =>
         {
             e.HasKey(c => c.Id);
-            e.HasOne(c => c.Parent)
-                .WithMany(c => c.Replies)
-                .HasForeignKey(c => c.ParentId)
-                .OnDelete(DeleteBehavior.Restrict);
+            
+            // Indexes
+            e.HasIndex(c => c.CreatedAt).IsDescending();
+            e.HasIndex(c => c.ReviewId);
+            e.HasIndex(c => c.UserId);
         });
 
-        // --- Like ---
+        // ========== 5. LIKE ==========
         b.Entity<Like>(e =>
         {
-            e.HasKey(l => new { l.UserId, l.ReviewId });
-            e.HasOne(l => l.User)
-                .WithMany(u => u.Likes)
-                .HasForeignKey(l => l.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+            e.HasKey(l => l.Id);
+            
+            // Unique constraint: ensure one like per user per review
+            e.HasIndex(l => new { l.UserId, l.ReviewId })
+                .IsUnique()
+                .HasDatabaseName("IX_Like_UserReview_Unique");
         });
 
-        // --- Notification ---
-        b.Entity<Notification>(e =>
+        // ========== 6. FOLLOW ==========
+        b.Entity<Follow>(e =>
         {
-            e.HasKey(n => n.Id);
-            e.Property(n => n.Type).HasConversion<string>();
+            e.HasKey(f => f.Id);
+            
+            // Unique constraint: one follow relationship per pair
+            e.HasIndex(f => new { f.FollowerId, f.FollowingId })
+                .IsUnique()
+                .HasDatabaseName("IX_Follow_FollowerFollowing_Unique");
+            
+            // Additional indexes for queries
+            e.HasIndex(f => f.FollowerId);
+            e.HasIndex(f => f.FollowingId);
+            
+            // Navigation properties already configured in User entity
+        });
+
+        // ========== 7. REVIEW_EMBEDDING (AI Vectors) ==========
+        b.Entity<ReviewEmbedding>(e =>
+        {
+            e.HasKey(re => re.Id);
+            
+            // Indexes
+            e.HasIndex(re => re.ReviewId).IsUnique();
+            e.HasIndex(re => re.MovieId);
+            e.HasIndex(re => re.CreatedAt);
+            
+            // Note: For pgvector, these will need IVFFlat or HNSW indexes at database level:
+            // CREATE INDEX ON review_embeddings USING ivfflat 
+            //     (movie_description_vector vector_cosine_ops) WITH (lists = 100);
+            // This migration should be done separately via raw SQL or pgvector extension setup
         });
     }
 }

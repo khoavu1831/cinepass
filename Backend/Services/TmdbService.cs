@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CinePass_be.Services;
 
+/// <summary>
+/// TmdbService - Fetch movie data from TMDB API and seed database
+/// For MVP: Stores genres as JSON instead of separate Genre/MovieGenre tables
+/// </summary>
 public class TmdbService(HttpClient http, IConfiguration config, AppDbContext db)
 {
     private readonly string _token = config["Tmdb:Token"]!;
@@ -19,10 +23,12 @@ public class TmdbService(HttpClient http, IConfiguration config, AppDbContext db
         return req;
     }
 
+    /// <summary>
+    /// Seed movies from TMDB popular movies API
+    /// Stores genre IDs as JSON array in Movie.GenresJson
+    /// </summary>
     public async Task<int> SeedMoviesAsync(int count = 20)
     {
-        await SeedGenresAsync();
-
         var seeded = 0;
         var page = 1;
 
@@ -40,17 +46,30 @@ public class TmdbService(HttpClient http, IConfiguration config, AppDbContext db
 
                 var tmdbId = item.GetProperty("id").GetInt32();
 
+                // Skip if already exists
                 if (await db.Movies.AnyAsync(m => m.TmdbId == tmdbId))
                     continue;
 
+                // Parse release date
                 var releaseStr = item.TryGetProperty("release_date", out var rd) ? rd.GetString() : null;
                 DateOnly? releaseDate = DateOnly.TryParse(releaseStr, out var d) ? d : null;
 
+                // Extract and serialize genres as JSON
+                string genresJson = "[]";
+                if (item.TryGetProperty("genre_ids", out var genreIds))
+                {
+                    var genres = genreIds.EnumerateArray()
+                        .Select(g => g.GetInt32().ToString())
+                        .ToList();
+                    genresJson = JsonSerializer.Serialize(genres);
+                }
+
+                // Create movie entity
                 var movie = new Movie
                 {
                     TmdbId = tmdbId,
                     Title = item.GetProperty("title").GetString() ?? "",
-                    OriginalTitle = item.TryGetProperty("original_title", out var ot) ? ot.GetString() : null,
+                    LocalTitle = item.TryGetProperty("title", out var t) ? t.GetString() : null,
                     Description = item.TryGetProperty("overview", out var ov) ? ov.GetString() : null,
                     Duration = 120,
                     ReleaseDate = releaseDate,
@@ -58,34 +77,14 @@ public class TmdbService(HttpClient http, IConfiguration config, AppDbContext db
                         ? _imageBase + pp.GetString()
                         : null,
                     Language = item.TryGetProperty("original_language", out var lang) ? lang.GetString() : null,
-                    Status = releaseDate.HasValue && releaseDate.Value > DateOnly.FromDateTime(DateTime.Today)
-                        ? MovieStatus.COMING_SOON
-                        : MovieStatus.NOW_SHOWING,
+                    GenresJson = genresJson,
                     RatingAvg = item.TryGetProperty("vote_average", out var va)
-                        ? Math.Round((decimal)va.GetDouble(), 1)
+                        ? Math.Round((decimal)va.GetDouble() / 2, 1)  // Convert from 0-10 TMDB scale to 0-5
                         : 0
                 };
 
                 db.Movies.Add(movie);
                 await db.SaveChangesAsync();
-
-                if (item.TryGetProperty("genre_ids", out var genreIds))
-                {
-                    foreach (var gid in genreIds.EnumerateArray())
-                    {
-                        var genreId = gid.GetInt32();
-                        if (await db.Genres.AnyAsync(g => g.Id == genreId))
-                        {
-                            db.MovieGenres.Add(new MovieGenre
-                            {
-                                MovieId = movie.Id,
-                                GenreId = genreId
-                            });
-                        }
-                    }
-                    await db.SaveChangesAsync();
-                }
-
                 seeded++;
             }
 
@@ -95,32 +94,5 @@ public class TmdbService(HttpClient http, IConfiguration config, AppDbContext db
         }
 
         return seeded;
-    }
-
-    private async Task SeedGenresAsync()
-    {
-        var res = await http.SendAsync(BuildRequest("genre/movie/list?language=vi"));
-        if (!res.IsSuccessStatusCode) return;
-
-        var json = JsonDocument.Parse(await res.Content.ReadAsStringAsync());
-        var genres = json.RootElement.GetProperty("genres");
-
-        foreach (var item in genres.EnumerateArray())
-        {
-            var id = item.GetProperty("id").GetInt32();
-            var name = item.GetProperty("name").GetString() ?? "";
-
-            if (!await db.Genres.AnyAsync(g => g.Id == id))
-            {
-                db.Genres.Add(new Genre
-                {
-                    Id = id,
-                    Name = name,
-                    Slug = name.ToLower().Replace(" ", "-").Replace("&", "and")
-                });
-            }
-        }
-
-        await db.SaveChangesAsync();
     }
 }
