@@ -70,7 +70,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasKey(m => m.Id);
             
             // Unique & indexes
-            e.HasIndex(m => m.TmdbId).IsUnique().IsNullable();
+            e.HasIndex(m => m.TmdbId).IsUnique();
             e.HasIndex(m => m.ReviewCount).IsDescending();
             e.HasIndex(m => m.RatingAvg).IsDescending();
             
