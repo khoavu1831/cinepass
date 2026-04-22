@@ -11,7 +11,6 @@ const Login = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuthStore();
 
-  // Redirect if already logged in as Admin
   useEffect(() => {
     if (isAuthenticated && (user?.role === "SUPERADMIN" || user?.role === "ADMIN")) {
       navigate("/admin/dashboard");
@@ -27,7 +26,6 @@ const Login = () => {
 
     try {
       setLoading(true);
-      // We still use the same login endpoint, but check the role afterwards
       const res = await axiosClient.post("/auth/login", { email, password });
       
       const { userId, username, email: userEmail, role, accessToken, refreshToken } = res.data;
@@ -51,7 +49,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-[#0f111a] flex items-center justify-center p-4 font-poppins relative overflow-hidden">
-      {/* Background Decor */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 blur-[120px] pointer-events-none"></div>
 
