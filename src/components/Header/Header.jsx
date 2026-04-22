@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import movieSvg from "/movie.svg";
 import Logo from "../Logo";
 import AuthModal from "../AuthModal/AuthModal";
+import useAuthStore from "../../store/useAuthStore";
+import toast from "react-hot-toast";
 
 function Header() {
   const headerRef = useRef(null);
@@ -15,6 +17,13 @@ function Header() {
   const [showSearch, setShowSearch] = useState(false);
   const [showMenuItems, setShowMenuItems] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  const { user, isAuthenticated, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Đăng xuất thành công");
+  };
 
   // Handle scroll header
   useEffect(() => {
@@ -138,13 +147,27 @@ function Header() {
             </div>
 
             {/* Button - test link: /watch */}
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="bg-white flex items-center rounded-3xl px-3 py-2.5 w-auto text-[13px] font-medium opacity-90 cursor-pointer hover:opacity-100"
-            >
-              <i className="fa-solid fa-user"></i>
-              <h4 className="ml-1.5">Thành viên</h4>
-            </button>
+            <div className="flex items-center gap-3">
+              {isAuthenticated && user ? (
+                <div className="flex items-center gap-3 text-white">
+                  <span className="text-sm font-medium">{user.displayName}</span>
+                  <button 
+                    onClick={handleLogout}
+                    className="bg-red-500 hover:bg-red-600 rounded-3xl px-3 py-1.5 text-[12px] font-medium cursor-pointer"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="bg-white flex items-center rounded-3xl px-3 py-2.5 w-auto text-[13px] font-medium opacity-90 cursor-pointer hover:opacity-100"
+                >
+                  <i className="fa-solid fa-user"></i>
+                  <h4 className="ml-1.5">Thành viên</h4>
+                </button>
+              )}
+            </div>
           </div>
         </nav>
 
@@ -155,13 +178,25 @@ function Header() {
             className="xl:hidden absolute top-full left-0 mt-1 w-full md:max-w-[320px] px-1.5 z-50"
           >
             <div className="bg-[#2b3561] rounded-[14px] flex flex-col py p-4">
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="bg-white flex justify-center items-center rounded-3xl px-3 text-[13px] font-medium opacity-90 cursor-pointer hover:opacity-100 w-full h-9.5 "
-              >
-                <i className="fa-solid fa-user"></i>
-                <h4 className="ml-1.5">Thành viên</h4>
-              </button>
+              {isAuthenticated && user ? (
+                <div className="flex flex-col gap-2">
+                  <span className="text-white text-center text-sm font-medium">Xin chào, {user.displayName}</span>
+                  <button 
+                    onClick={handleLogout}
+                    className="bg-red-500 hover:bg-red-600 text-white rounded-3xl px-3 py-2 text-[13px] font-medium cursor-pointer w-full"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="bg-white flex justify-center items-center rounded-3xl px-3 text-[13px] font-medium opacity-90 cursor-pointer hover:opacity-100 w-full h-9.5 "
+                >
+                  <i className="fa-solid fa-user"></i>
+                  <h4 className="ml-1.5">Thành viên</h4>
+                </button>
+              )}
 
               <div className="grid grid-cols-2 mt-4">
                 <NavItem label={"Phim Lẻ"} href={"/phimle"} activeNav={activeNav} setActiveNav={setActiveNav} variant="mobile" />

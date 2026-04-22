@@ -8,38 +8,27 @@ import { mapSliderMovie } from "../../mappers/sliderMovieMapper";
 
 function Home() {
   const [homeData, setHomeData] = useState({
-    sliderMovies: [],
-    animeSlider: [],
-    koreanMovies: [],
-    usukMovies: [],
-    thaiMovies: [],
-    cinemaMovies: [],
-    topTodayMovies: [],
-    thrillerMovies: [],
-    animeCollection: [],
+    collections: [],
+    rankingMovies: [],
   });
 
   useEffect(() => {
     getHomeData().then((data) => {
       setHomeData({
-        sliderMovies: data.sliderMovies.map(mapSliderMovie),
-        animeSlider: data.animeSlider.map(mapSliderMovie),
-        koreanMovies: data.koreanMovies.map(mapSliderMovie),
-        usukMovies: data.usukMovies.map(mapSliderMovie),
-        thaiMovies: data.thaiMovies.map(mapSliderMovie),
-        cinemaMovies: data.cinemaMovies.map(mapSliderMovie),
-        topTodayMovies: data.topTodayMovies.map(mapSliderMovie),
-        thrillerMovies: data.thrillerMovies.map(mapSliderMovie),
-        animeCollection: data.animeCollection.map(mapSliderMovie),
+        collections: data.collections,
+        rankingMovies: data.rankingMovies.map(mapSliderMovie),
       });
     });
   }, []);
 
+  const heroSliderMovies = homeData.collections.find(c => c.type === 'hero_slider')?.movies || [];
+  const otherCollections = homeData.collections.filter(c => c.type !== 'hero_slider');
+
   return (
     <div className="h-full bg-[#1b1d29] xl:px-6">
       <Header />
-      <Slider movies={homeData.sliderMovies} />
-      <MainContent data={homeData} />
+      <Slider movies={heroSliderMovies} />
+      <MainContent collections={otherCollections} rankingMovies={homeData.rankingMovies} />
       <Footer />
     </div>
   );

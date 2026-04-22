@@ -8,7 +8,7 @@ function AuthModal({ showAuthModal, setShowAuthModal }) {
 
   const renderForm = () => {
     switch (form) {
-      case "signin": return <Signin onSwitchSignup={() => setForm("signup")} onSwitchForgetPassword={() => setForm("forget")} />
+      case "signin": return <Signin onSwitchSignup={() => setForm("signup")} onSwitchForgetPassword={() => setForm("forget")} onSuccess={() => setShowAuthModal(false)} />
       case "signup": return <Signup onSwitchSignin={() => setForm("signin")} />
       case "forget": return <ForgetPassword onSwitchSignin={() => setForm("signin")} />
     }
