@@ -16,25 +16,29 @@ const formatRuntime = (runtime) => {
 };
 
 export const mapSliderMovie = (m) => {
-  const genreList = m.genres
-    ? m.genres.map(g => ({ id: g.id, name: g.name.replace(/^Phim\s*/i, "") }))
-    : (m.genre_ids ?? []).map(id => ({ id, name: GENRE_MAP[id] ?? "" }));
+  const isBackend = !!m.posterUrl || !!m.backdropUrl || m.tmdbId;
+
+  const genreList = isBackend 
+    ? (m.genres || []).map((name, index) => ({ id: index, name }))
+    : m.genres
+      ? m.genres.map(g => ({ id: g.id, name: g.name.replace(/^Phim\s*/i, "") }))
+      : (m.genre_ids ?? []).map(id => ({ id, name: GENRE_MAP[id] ?? "" }));
 
   return {
     id: m.id,
-    poster: m.backdrop_path ? `${TMDB_IMAGE_URL}/original${m.backdrop_path}` : "vietnam.png",
-    avatar: m.poster_path ? `${TMDB_IMAGE_URL}/w500${m.poster_path}` : "vietnam.png",
-    title: m.title ?? m.name ?? "",
-    subTitle: m.original_title ?? m.original_name ?? "",
-    description: m.overview ?? "",
+    poster: isBackend ? (m.backdropUrl || "vietnam.png") : (m.backdrop_path ? `${TMDB_IMAGE_URL}/original${m.backdrop_path}` : "vietnam.png"),
+    avatar: isBackend ? (m.posterUrl || "vietnam.png") : (m.poster_path ? `${TMDB_IMAGE_URL}/w500${m.poster_path}` : "vietnam.png"),
+    title: isBackend ? (m.localTitle || m.title || "") : (m.title ?? m.name ?? ""),
+    subTitle: isBackend ? m.title : (m.original_title ?? m.original_name ?? ""),
+    description: isBackend ? (m.description || "") : (m.overview ?? ""),
     subtitle: "0",
     dub: "0",
     info: {
-      imdb: m.vote_average ? m.vote_average.toFixed(1) : "N/A",
-      year: m.release_date ? m.release_date.slice(0, 4) : (m.first_air_date?.slice(0, 4) ?? "--"),
+      imdb: isBackend ? (m.ratingAvg > 0 ? m.ratingAvg.toFixed(1) : "N/A") : (m.vote_average ? m.vote_average.toFixed(1) : "N/A"),
+      year: isBackend ? (m.releaseDate ? m.releaseDate.slice(0, 4) : "--") : (m.release_date ? m.release_date.slice(0, 4) : (m.first_air_date?.slice(0, 4) ?? "--")),
       resolution: "HD",
       ageLimit: m.adult ? "18+" : "",
-      duration: formatRuntime(m.runtime),
+      duration: isBackend ? formatRuntime(m.duration) : formatRuntime(m.runtime),
       genres: genreList,
     },
   };

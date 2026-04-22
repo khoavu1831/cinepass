@@ -14,13 +14,9 @@ function CollectionTopMovie({ movies, titleCollection, type }) {
 
   return (
     <>
-      <div className={`px-4 ${isTopMovies && "xl:flex"}`}>
+      <div className="px-4 relative">
         {/* Thumbnail */}
-        <div className={`flex w-full 
-          ${isTopMovies
-            ? "xl:pb-13.75 max-xl:items-center max-xl:justify-between xl:flex-col xl:justify-end max-xl:mb-4"
-            : "items-center max-sm:justify-between mb-4"}`}>
-
+        <div className="flex w-full items-center max-sm:justify-between mb-4">
           {/* Title */}
           <div className="text-[22px] sm:text-[25px] xl:text-[32px] font-medium text-white max-w-[86%]">
             {titleCollection}
@@ -28,19 +24,19 @@ function CollectionTopMovie({ movies, titleCollection, type }) {
         </div>
 
         {/* Slide nav */}
-        <div className="max-md:hidden relative text-white text-4xl">
+        <div className="max-md:hidden absolute w-full left-0 right-0 top-[40%] -translate-y-1/2 z-50 text-white text-4xl pointer-events-none">
           <button
             ref={preRef}
-            className={`absolute cursor-pointer z-50 xl:-left-10 top-66
-              ${isBeginning ? "opacity-0 pointer-events-none" : "opacity-40 hover:opacity-100"}`}
+            className={`absolute cursor-pointer pointer-events-auto -left-4 md:-left-10
+              ${isBeginning ? "opacity-0" : "opacity-40 hover:opacity-100"}`}
           >
             <i className="fa-solid fa-chevron-left"></i>
           </button>
 
           <button
             ref={nextRef}
-            className={`absolute cursor-pointer z-50 xl:-right-10 top-66
-              ${isEnd ? "opacity-0 pointer-events-none" : "opacity-40 hover:opacity-100"}`}
+            className={`absolute cursor-pointer pointer-events-auto -right-4 md:-right-10
+              ${isEnd ? "opacity-0" : "opacity-40 hover:opacity-100"}`}
           >
             <i className="fa-solid fa-chevron-right"></i>
           </button>

@@ -303,6 +303,7 @@ const CollectionManagement = () => {
                       <option value="standard_vertical">Standard Vertical (List)</option>
                       <option value="top_movies">Top Movies (Numbered)</option>
                       <option value="hero_slider">Hero Slider (Banners)</option>
+                      <option value="anime_slider">Anime Slider (2 Rows)</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">

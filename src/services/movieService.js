@@ -1,4 +1,5 @@
 import axiosClient from "../api/axiosClient";
+import { mapSliderMovie } from "../mappers/sliderMovieMapper";
 
 export const getMovies = (params) => axiosClient.get(`/movies?${params}`).then(res => res.data);
 
@@ -20,39 +21,25 @@ export const fetchThrillerMovies = () => getMovies("search=thriller&sortBy=popul
 
 export const fetchAnimeCollection = () => getMovies("search=anime&sortBy=voteAverage&order=desc&pageSize=10");
 
+export const fetchPublicCollections = () => axiosClient.get("/public/collections").then(res => res.data);
+
 export const getHomeData = async () => {
   const [
-    sliderRes,
-    animeSliderRes,
-    koreanRes,
-    usukRes,
-    thaiRes,
-    cinemaRes,
-    topTodayRes,
-    thrillerRes,
-    animeColRes,
+    collectionsRes,
+    sliderRes
   ] = await Promise.all([
-    fetchSliderMovies(),
-    fetchAnimeSlider(),
-    fetchKoreanMovies(),
-    fetchUSUKMovies(),
-    fetchThaiMovies(),
-    fetchCinemaMovies(),
-    fetchTopTodayMovies(),
-    fetchThrillerMovies(),
-    fetchAnimeCollection(),
+    fetchPublicCollections(),
+    fetchSliderMovies()
   ]);
 
+  const collections = (collectionsRes || []).map(col => ({
+    ...col,
+    movies: (col.movies || []).map(mapSliderMovie)
+  }));
+
   return {
-    sliderMovies: sliderRes.data ?? [],
-    animeSlider: animeSliderRes.data ?? [],
-    koreanMovies: koreanRes.data ?? [],
-    usukMovies: usukRes.data ?? [],
-    thaiMovies: thaiRes.data ?? [],
-    cinemaMovies: cinemaRes.data ?? [],
-    topTodayMovies: topTodayRes.data ?? [],
-    thrillerMovies: thrillerRes.data ?? [],
-    animeCollection: animeColRes.data ?? [],
+    collections,
+    rankingMovies: sliderRes.data || []
   };
 };
 
