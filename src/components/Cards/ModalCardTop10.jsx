@@ -1,4 +1,4 @@
-function ModalCardTop({ m }) {
+function ModalCardTop10({ m }) {
   return (
     <>
       {/* Wrapper */}
@@ -102,4 +102,4 @@ function ModalCardTop({ m }) {
   )
 }
 
-export default ModalCardTop
+export default ModalCardTop10

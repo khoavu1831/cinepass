@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import TopSliderAnime from "../../pages/Home/components/Slider/TopSliderAnime";
-import ModalCardTop from "./ModalCardTop";
+import ModalCardTop10 from "./ModalCardTop10";
 
-function CardTop({ movie, index }) {
+function CardTop10({ movie, index }) {
   const isEven = index % 2 === 0;
 
   return (
@@ -50,7 +50,7 @@ function CardTop({ movie, index }) {
                   }  
                 `}
               >
-                <ModalCardTop m={movie} index={index} />
+                <ModalCardTop10 m={movie} index={index} />
               </div>
             </div>
 
@@ -95,4 +95,4 @@ function CardTop({ movie, index }) {
   )
 }
 
-export default CardTop
+export default CardTop10

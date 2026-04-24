@@ -1,11 +1,11 @@
-import CardTop from "../../../../components/Cards/CardTop"
+import CardTop10 from "../../../../components/Cards/CardTop10"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Navigation } from "swiper/modules"
 import "swiper/css"
 import "swiper/css/navigation"
 import { useState, useRef } from "react"
 
-function CollectionTopMovie({ movies, titleCollection, type }) {
+function CollectionTop10({ movies, titleCollection, type }) {
   const isTopMovies = type === "top-movies";
   const preRef = useRef(null);
   const nextRef = useRef(null);
@@ -87,7 +87,7 @@ function CollectionTopMovie({ movies, titleCollection, type }) {
         >
           {movies.map((m, index) => (
             <SwiperSlide key={m.id}>
-              <CardTop movie={m} index={index} />
+              <CardTop10 movie={m} index={index} />
             </SwiperSlide>
           ))}
         </Swiper>
@@ -96,4 +96,4 @@ function CollectionTopMovie({ movies, titleCollection, type }) {
   )
 }
 
-export default CollectionTopMovie
+export default CollectionTop10
